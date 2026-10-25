@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Anshrit Singh | 3D Propulsion CAD &amp; Injector Visualizer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <!-- Google model-viewer for high fidelity PBR 3D rendering -->
+  <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
+  <style>
+    :root {
+      --bg: #070a12;
+      --card-bg: rgba(15, 23, 42, 0.82);
+      --card-border: rgba(56, 189, 248, 0.22);
+      --primary: #38bdf8;
+      --primary-glow: rgba(56, 189, 248, 0.45);
+      --accent: #f97316;
+      --text: #f1f5f9;
+      --text-muted: #94a3b8;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: radial-gradient(circle at 50% 10%, #172554 0%, #090d16 60%, #030712 100%);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+    }
+
+    header {
+      padding: 1.15rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(14px);
+      background: rgba(7, 10, 18, 0.88);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.85rem;
+    }
+
+    .brand-icon {
+      width: 40px;
+      height: 40px;
+      background: linear-gradient(135deg, #f97316, #eab308);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 20px rgba(249, 115, 22, 0.45);
+      font-size: 1.25rem;
+    }
+
+    .brand-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      background: linear-gradient(90deg, #ffffff, #38bdf8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .brand-subtitle {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .header-links {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .back-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 9999px;
+      font-size: 0.82rem;
+      color: #e2e8f0;
+      text-decoration: none;
+      font-weight: 600;
+      transition: all 0.2s ease;
+    }
+
+    .back-btn:hover {
+      background: rgba(56, 189, 248, 0.15);
+      border-color: rgba(56, 189, 248, 0.4);
+      color: #38bdf8;
+      box-shadow: 0 0 15px rgba(56, 189, 248, 0.25);
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.4rem 0.9rem;
+      background: rgba(34, 197, 94, 0.1);
+      border: 1px solid rgba(34, 197, 94, 0.3);
+      border-radius: 9999px;
+      font-size: 0.8rem;
+      color: #4ade80;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .badge-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #22c55e;
+      box-shadow: 0 0 8px #22c55e;
+    }
+
+    main {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1fr 420px;
+      gap: 1.75rem;
+      padding: 1.5rem 2rem 2.5rem;
+      max-width: 1720px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    @media (max-width: 1120px) {
+      main {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* 3D Viewport Card */
+    .viewport-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 24px;
+      backdrop-filter: blur(16px);
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+      min-height: 720px;
+    }
+
+    .viewport-toolbar {
+      padding: 1rem 1.35rem;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.75rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(15, 23, 42, 0.75);
+      z-index: 10;
+    }
+
+    .model-selector {
+      display: flex;
+      flex-wrap: wrap;
+      background: rgba(0, 0, 0, 0.45);
+      padding: 4px;
+      border-radius: 14px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      gap: 4px;
+    }
+
+    .sel-btn {
+      padding: 0.55rem 0.95rem;
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      border-radius: 10px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      font-family: inherit;
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+      white-space: nowrap;
+    }
+
+    .sel-btn:hover {
+      color: #fff;
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .sel-btn.active {
+      background: linear-gradient(135deg, #38bdf8, #0284c7);
+      color: #030712;
+      box-shadow: 0 0 20px var(--primary-glow);
+    }
+
+    .viewport-info {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    model-viewer {
+      width: 100%;
+      flex: 1;
+      height: 100%;
+      min-height: 580px;
+      background: radial-gradient(circle at 50% 50%, rgba(30, 41, 59, 0.35) 0%, rgba(7, 10, 18, 0.95) 100%);
+      --poster-color: transparent;
+    }
+
+    .hud-overlay {
+      position: absolute;
+      bottom: 1.35rem;
+      left: 1.35rem;
+      background: rgba(9, 13, 22, 0.88);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      padding: 0.9rem 1.25rem;
+      border-radius: 14px;
+      backdrop-filter: blur(10px);
+      pointer-events: none;
+      z-index: 10;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      line-height: 1.6;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+    }
+
+    .hud-row {
+      display: flex;
+      gap: 1.2rem;
+      justify-content: space-between;
+    }
+
+    .hud-label {
+      color: var(--text-muted);
+    }
+
+    .hud-val {
+      color: var(--primary);
+      font-weight: 600;
+    }
+
+    /* Sidebar / Control Panel */
+    .sidebar {
+      display: flex;
+      flex-direction: column;
+      gap: 1.35rem;
+    }
+
+    .panel-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 22px;
+      backdrop-filter: blur(16px);
+      padding: 1.5rem;
+      box-shadow: 0 12px 35px rgba(0, 0, 0, 0.35);
+    }
+
+    .panel-header {
+      margin-bottom: 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+    }
+
+    .panel-icon {
+      font-size: 1.25rem;
+    }
+
+    .panel-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .download-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .dl-btn {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.85rem 1.15rem;
+      border-radius: 14px;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.85rem;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      cursor: pointer;
+    }
+
+    .dl-btn-glb {
+      background: linear-gradient(135deg, rgba(56, 189, 248, 0.12), rgba(59, 130, 246, 0.12));
+      border-color: rgba(56, 189, 248, 0.35);
+      color: #38bdf8;
+    }
+
+    .dl-btn-glb:hover {
+      background: linear-gradient(135deg, #38bdf8, #2563eb);
+      color: #030712;
+      box-shadow: 0 0 25px rgba(56, 189, 248, 0.5);
+      transform: translateY(-2px);
+    }
+
+    .dl-btn-stl {
+      background: linear-gradient(135deg, rgba(249, 115, 22, 0.12), rgba(234, 88, 12, 0.12));
+      border-color: rgba(249, 115, 22, 0.35);
+      color: #fb923c;
+    }
+
+    .dl-btn-stl:hover {
+      background: linear-gradient(135deg, #f97316, #ea580c);
+      color: #ffffff;
+      box-shadow: 0 0 25px rgba(249, 115, 22, 0.5);
+      transform: translateY(-2px);
+    }
+
+    .dl-btn-obj {
+      background: linear-gradient(135deg, rgba(168, 85, 247, 0.12), rgba(147, 51, 234, 0.12));
+      border-color: rgba(168, 85, 247, 0.35);
+      color: #c084fc;
+    }
+
+    .dl-btn-obj:hover {
+      background: linear-gradient(135deg, #a855f7, #9333ea);
+      color: #ffffff;
+      box-shadow: 0 0 25px rgba(168, 85, 247, 0.5);
+      transform: translateY(-2px);
+    }
+
+    .dl-btn-zip {
+      background: linear-gradient(135deg, rgba(34, 197, 94, 0.15), rgba(16, 185, 129, 0.15));
+      border-color: rgba(34, 197, 94, 0.4);
+      color: #4ade80;
+    }
+
+    .dl-btn-zip:hover {
+      background: linear-gradient(135deg, #22c55e, #059669);
+      color: #ffffff;
+      box-shadow: 0 0 25px rgba(34, 197, 94, 0.5);
+      transform: translateY(-2px);
+    }
+
+    .dl-btn-content {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      text-align: left;
+    }
+
+    .dl-title {
+      font-size: 0.9rem;
+      font-weight: 700;
+    }
+
+    .dl-desc {
+      font-size: 0.72rem;
+      opacity: 0.75;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .dl-size {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      padding: 3px 8px;
+      border-radius: 6px;
+      background: rgba(0, 0, 0, 0.35);
+    }
+
+    /* CAD Specs List */
+    .cad-tree {
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+      font-size: 0.8rem;
+    }
+
+    .cad-item {
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+      padding: 0.55rem 0.75rem;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.03);
+      border-left: 3px solid var(--primary);
+    }
+
+    .cad-item.copper { border-left-color: #d97736; }
+    .cad-item.steel { border-left-color: #94a3b8; }
+    .cad-item.brass { border-left-color: #eab308; }
+    .cad-item.oring { border-left-color: #475569; }
+
+    .cad-name {
+      font-weight: 600;
+      color: #f8fafc;
+      flex: 1;
+    }
+
+    .cad-feature {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .note-box {
+      margin-top: 1rem;
+      padding: 0.85rem 1rem;
+      background: rgba(56, 189, 248, 0.08);
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      border-radius: 12px;
+      font-size: 0.76rem;
+      color: #bae6fd;
+      line-height: 1.45;
+      display: flex;
+      gap: 0.65rem;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="brand">
+      <div class="brand-icon">🚀</div>
+      <div>
+        <div class="brand-title">Anshrit Singh | Propulsion CAD Studio</div>
+        <div class="brand-subtitle">Interactive 3D Hardware Visualizer &amp; Download Center</div>
+      </div>
+    </div>
+    <div class="header-links">
+      <div class="status-badge">
+        <span class="badge-dot"></span>
+        <span>Version 7.2 Active</span>
+      </div>
+      <a href="../index.html" class="back-btn">
+        <span>&larr;</span> Back to Main Portfolio
+      </a>
+    </div>
+  </header>
+
+  <main>
+    <!-- 3D Interactive Viewport -->
+    <div class="viewport-card">
+      <div class="viewport-toolbar">
+        <div class="model-selector">
+          <button id="btn-cutaway" class="sel-btn active" onclick="switchModel('pintle_cutaway')">
+            <span>🔬</span> Pintle Cutaway (270°)
+          </button>
+          <button id="btn-full" class="sel-btn" onclick="switchModel('pintle_full')">
+            <span>🚀</span> Pintle Full (360°)
+          </button>
+          <button id="btn-swirl" class="sel-btn" onclick="switchModel('swirl')">
+            <span>🌀</span> Coaxial Swirl Injector
+          </button>
+          <button id="btn-motor" class="sel-btn" onclick="switchModel('motor')">
+            <span>💥</span> Solid Motor Nozzle Cutaway
+          </button>
+        </div>
+        <div class="viewport-info">
+          Rotate: Drag &bull; Zoom: Scroll &bull; Pan: Right-Click
+        </div>
+      </div>
+
+      <!-- 3D PBR WebGL Viewer -->
+      <model-viewer id="cad-viewer"
+        src="pintle_injector_cutaway.glb"
+        alt="Propulsion CAD Model"
+        auto-rotate
+        camera-controls
+        touch-action="pan-y"
+        shadow-intensity="1.5"
+        shadow-softness="0.8"
+        exposure="1.0"
+        environment-image="neutral"
+        camera-orbit="45deg 70deg 180mm"
+        min-camera-orbit="auto auto 30mm"
+        max-camera-orbit="auto auto 800mm">
+      </model-viewer>
+
+      <!-- HUD telemetry overlay -->
+      <div class="hud-overlay">
+        <div class="hud-row">
+          <span class="hud-label">Active Model:</span>
+          <span id="hud-file" class="hud-val">pintle_injector_cutaway.glb</span>
+        </div>
+        <div class="hud-row">
+          <span class="hud-label">Architecture:</span>
+          <span id="hud-desc" class="hud-val">36-Slot Metering Copper Tip + Flange</span>
+        </div>
+        <div class="hud-row">
+          <span class="hud-label">Application:</span>
+          <span id="hud-app" class="hud-val">1000 N Hypergolic Satellite Thrust Engine</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sidebar: Downloads & Architecture Tree -->
+    <div class="sidebar">
+
+      <!-- Direct Downloads Card -->
+      <div class="panel-card">
+        <div class="panel-header">
+          <span class="panel-icon">📥</span>
+          <h2 class="panel-title">Download 3D CAD Assets</h2>
+        </div>
+        <div class="download-grid">
+          <!-- Complete Bundle ZIP -->
+          <a class="dl-btn dl-btn-zip" href="pintle_injector_3d_models.zip" download>
+            <div class="dl-btn-content">
+              <span class="dl-title">Download Complete CAD ZIP</span>
+              <span class="dl-desc">All GLB, STL &amp; OBJ files packaged</span>
+            </div>
+            <span class="dl-size">629 KB</span>
+          </a>
+
+          <!-- GLB Downloads -->
+          <a class="dl-btn dl-btn-glb" href="pintle_injector_cutaway.glb" download>
+            <div class="dl-btn-content">
+              <span class="dl-title">Pintle Cutaway (GLB)</span>
+              <span class="dl-desc">270° Internal Cross-Section &bull; Web &amp; 3D</span>
+            </div>
+            <span class="dl-size">1.5 MB</span>
+          </a>
+
+          <a class="dl-btn dl-btn-glb" href="pintle_injector_full.glb" download>
+            <div class="dl-btn-content">
+              <span class="dl-title">Pintle Full Assembly (GLB)</span>
+              <span class="dl-desc">360° Complete Unit &bull; Web &amp; 3D</span>
+            </div>
+            <span class="dl-size">2.0 MB</span>
+          </a>
+
+          <!-- STL Downloads -->
+          <a class="dl-btn dl-btn-stl" href="pintle_injector_cutaway.stl" download>
+            <div class="dl-btn-content">
+              <span class="dl-title">3D Print STL (Cutaway)</span>
+              <span class="dl-desc">Binary STL &bull; Slicers &amp; Rapid Prototyping</span>
+            </div>
+            <span class="dl-size">2.0 MB</span>
+          </a>
+
+          <a class="dl-btn dl-btn-stl" href="pintle_injector_full.stl" download>
+            <div class="dl-btn-content">
+              <span class="dl-title">3D Print STL (Full)</span>
+              <span class="dl-desc">Binary STL &bull; Bambu, Cura, Prusa Slicers</span>
+            </div>
+            <span class="dl-size">2.7 MB</span>
+          </a>
+
+          <!-- OBJ Downloads -->
+          <a class="dl-btn dl-btn-obj" href="pintle_injector_cutaway.obj" download>
+            <div class="dl-btn-content">
+              <span class="dl-title">Wavefront OBJ (Cutaway)</span>
+              <span class="dl-desc">CAD &bull; SolidWorks, Fusion 360, Blender</span>
+            </div>
+            <span class="dl-size">4.0 MB</span>
+          </a>
+
+          <a class="dl-btn dl-btn-obj" href="pintle_injector_full.obj" download>
+            <div class="dl-btn-content">
+              <span class="dl-title">Wavefront OBJ (Full)</span>
+              <span class="dl-desc">CAD &bull; SolidWorks, Fusion 360, Blender</span>
+            </div>
+            <span class="dl-size">5.3 MB</span>
+          </a>
+
+          <!-- Motor Chamber GLB -->
+          <a class="dl-btn dl-btn-glb" href="solid_rocket_chamber_nozzle_cutaway.glb" download>
+            <div class="dl-btn-content">
+              <span class="dl-title">Motor Chamber &amp; Nozzle (GLB)</span>
+              <span class="dl-desc">De Laval Converging-Diverging Cutaway</span>
+            </div>
+            <span class="dl-size">128 KB</span>
+          </a>
+
+          <!-- Swirl Injector GLB -->
+          <a class="dl-btn dl-btn-glb" href="Coaxial_swirl_injector_full.glb" download>
+            <div class="dl-btn-content">
+              <span class="dl-title">Coaxial Swirl Injector (GLB)</span>
+              <span class="dl-desc">Dual Swirl Propellant Passage Unit</span>
+            </div>
+            <span class="dl-size">138 KB</span>
+          </a>
+        </div>
+
+        <div class="note-box">
+          <span>💡</span>
+          <span><strong>Engineered Accuracy:</strong> Generated from CAD cross-section coordinates with physical metering slots, mating threads, and O-ring gland clearances.</span>
+        </div>
+      </div>
+
+      <!-- Component Specs Card -->
+      <div class="panel-card">
+        <div class="panel-header">
+          <span class="panel-icon">⚙️</span>
+          <h2 class="panel-title">Component Specifications</h2>
+        </div>
+        <div class="cad-tree">
+          <div class="cad-item copper">
+            <span class="cad-name">Copper Pintle Tip</span>
+            <span class="cad-feature">36 radial slots @ 0.010" gap</span>
+          </div>
+          <div class="cad-item steel">
+            <span class="cad-name">Stainless Steel Centerbody</span>
+            <span class="cad-feature">304 SS &bull; Mating threads</span>
+          </div>
+          <div class="cad-item steel">
+            <span class="cad-name">Center Inlet Fitting</span>
+            <span class="cad-feature">Upper threaded propellant stem</span>
+          </div>
+          <div class="cad-item steel">
+            <span class="cad-name">Injector Baseplate &amp; Flange</span>
+            <span class="cad-feature">Conical manifold orifices</span>
+          </div>
+          <div class="cad-item steel">
+            <span class="cad-name">Upper Manifold Housing</span>
+            <span class="cad-feature">Main chamber retention block</span>
+          </div>
+          <div class="cad-item oring">
+            <span class="cad-name">3x Viton Fluoropolymer O-Rings</span>
+            <span class="cad-feature">Bore, step &amp; face seals</span>
+          </div>
+          <div class="cad-item steel">
+            <span class="cad-name">Side 90° Elbow Feed Fitting</span>
+            <span class="cad-feature">Hex boss &amp; fluid riser</span>
+          </div>
+          <div class="cad-item brass">
+            <span class="cad-name">Brass Chamber Port Fitting</span>
+            <span class="cad-feature">PT sensor tap @ 60° azimuth</span>
+          </div>
+          <div class="cad-item steel">
+            <span class="cad-name">6x Socket Head Cap Screws</span>
+            <span class="cad-feature">Grade 12.9 bolt circle</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <script>
+    const viewer = document.getElementById('cad-viewer');
+    const hudFile = document.getElementById('hud-file');
+    const hudDesc = document.getElementById('hud-desc');
+    const hudApp = document.getElementById('hud-app');
+
+    const models = {
+      pintle_cutaway: {
+        file: 'pintle_injector_cutaway.glb',
+        desc: '36-Slot Metering Copper Tip + Flange (Cutaway)',
+        app: '1000 N Hypergolic Satellite Thrust Engine',
+        orbit: '45deg 70deg 180mm',
+        btnId: 'btn-cutaway'
+      },
+      pintle_full: {
+        file: 'pintle_injector_full.glb',
+        desc: '360° Complete Injector Assembly',
+        app: 'Flight Configuration Unit',
+        orbit: '45deg 75deg 200mm',
+        btnId: 'btn-full'
+      },
+      swirl: {
+        file: 'Coaxial_swirl_injector_full.glb',
+        desc: 'Dual Swirl Propellant Injector Body',
+        app: 'LOX / Kerosene Liquid Rocket Combustion Engine',
+        orbit: '30deg 60deg 160mm',
+        btnId: 'btn-swirl'
+      },
+      motor: {
+        file: 'solid_rocket_chamber_nozzle_cutaway.glb',
+        desc: 'De Laval Converging-Diverging Nozzle + Grain Casing',
+        app: 'Solid Propellant Rocket Motor (KNDX / KNSU)',
+        orbit: '45deg 80deg 220mm',
+        btnId: 'btn-motor'
+      }
+    };
+
+    function switchModel(key) {
+      const m = models[key];
+      if (!m) return;
+      viewer.src = m.file;
+      hudFile.textContent = m.file;
+      hudDesc.textContent = m.desc;
+      hudApp.textContent = m.app;
+      viewer.cameraOrbit = m.orbit;
+
+      document.querySelectorAll('.sel-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById(m.btnId).classList.add('active');
+    }
+  </script>
+</body>
+</html>
